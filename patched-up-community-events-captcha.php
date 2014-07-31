@@ -7,11 +7,32 @@
  * Author: Casey Patrick Driscoll 
  * Author URI: http://caseypatrickdriscoll.com
  * License: GPL2
+ * Needs: Community Events - http://tri.be/shop/wordpress-community-events/
+ *		  Really Simply Captcha - http://wordpress.org/plugins/really-simple-captcha/
+ *
+ * Description: It's very simple, the plugin generates and renders a captcha before the commuity events submit button and then checks its accuracy during validation.
+ *
+ * Right now, it doesn't render the form if the captcha is invalid for some reason. That's not great, but atleast it prevents spam.
+ *
+ * Installation: IMPORTANT! You need to add one line of code to the Community Events Core. In tribe-community-events/submission-handler.php at line 37 in function validate() add:
+ *
+ * if ( !apply_filters( 'tribe_community_events_captcha', '' ) ) $this->valid = FALSE;
+ *
+ * This is not ideal and will be overwritten with every update. You'll need to add it back.
+ *
+ * TODO:
+ *		- Check dependency on both plugins
+ *		- Render form (with message?!) if invalid
  */
 
 add_action( 'tribe_events_community_before_form_submit', 'patched_up_add_captcha' );
-add_action( 'tribe_captcha_community_events', 'patched_up_check_captcha' );
+add_filter( 'tribe_community_events_captcha', 'patched_up_check_captcha' );
 
+/*
+ * Generate and render the captcha before the submit button
+ *
+ * @return nothing
+*/
 function patched_up_add_captcha() {
 	$captcha_instance = new ReallySimpleCaptcha();
 
@@ -41,32 +62,38 @@ function patched_up_add_captcha() {
 				<tr>
 					<td></td>
 					<td>
-						<small>Please fill in to prove you are human!</small>
+						<small>Please fill in the Captcha to prove you are human!</small>
 					</td>
 				</tr><!-- .captcha -->
 			</tbody>
-		</table><!-- #event_cost -->
+		</table><!-- #event-captcha -->
 	</div>
 <?php
 }
 
+/*
+ * After submission, check validity and return to 
+ * TribeCommunityEvents_SubmissionHandler::validate()
+ *
+ * @return boolean
+*/
 function patched_up_check_captcha() {
 	$captcha_instance = new ReallySimpleCaptcha();
+	$isValid = FALSE;
 
-	if ( isset( $_POST['EventCaptchaPrefix'] ) ) {
+	if ( isset( $_POST['EventCaptchaPrefix'] ) && isset( $_POST['EventCaptcha'] ) ) {
 		$prefix = $_POST['EventCaptchaPrefix'];
-		$the_answer = $_POST['EventCaptcha'];
-	} else
-		return FALSE;
+		$answer = $_POST['EventCaptcha'];
+	} 
 
-	if ( $captcha_instance->check( $prefix, $the_answer ) ) {
+	if ( $captcha_instance->check( $prefix, $answer ) ) {
 		$captcha_instance->remove( $prefix );
-		return TRUE;
+		$isValid = TRUE;
 	} else {
 		$captcha_instance->remove( $prefix );
-		return FALSE;
-	
-		//wp_redirect( home_url() . '/events/community/add' ); exit;
 	}
+	
+	//error_log( 'PREFIX: ' . $prefix . ' ANSWER: ' . $answer . ' VALID: ' . $isValid );
 
+	return $isValid;
 }
