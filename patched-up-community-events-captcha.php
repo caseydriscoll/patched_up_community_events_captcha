@@ -10,9 +10,9 @@
  * Needs: Community Events - http://tri.be/shop/wordpress-community-events/
  *		  Really Simply Captcha - http://wordpress.org/plugins/really-simple-captcha/
  *
- * Description: It's very simple, the plugin generates and renders a captcha before the commuity events submit button and then checks its accuracy during validation.
+ * Description: It's very simple, the plugin generates and renders a captcha before the community events submit button and then checks its accuracy during validation.
  *
- * Right now, it doesn't render the form if the captcha is invalid for some reason. That's not great, but atleast it prevents spam.
+ * Right now, it doesn't render the form if the captcha is invalid for some reason. That's not great, but at least it prevents spam.
  *
  * Installation: IMPORTANT! You need to add one line of code to the Community Events Core. In tribe-community-events/submission-handler.php at line 37 in function validate() add:
  *
@@ -23,6 +23,7 @@
  * TODO:
  *		- Check dependency on both plugins
  *		- Render form (with message?!) if invalid
+ *		- Find a better hook so don't need to add line to CE core
  */
 
 add_action( 'tribe_events_community_before_form_submit', 'patched_up_add_captcha' );
@@ -31,7 +32,6 @@ add_filter( 'tribe_community_events_captcha', 'patched_up_check_captcha' );
 /*
  * Generate and render the captcha before the submit button
  *
- * @return nothing
 */
 function patched_up_add_captcha() {
 	$captcha_instance = new ReallySimpleCaptcha();
